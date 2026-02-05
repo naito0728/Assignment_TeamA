@@ -3,6 +3,7 @@ from datetime import datetime
 from tkinter import messagebox
 from getrecord import fetch_by_id
 
+# コピーしてSlack形式に整形してクリップボードに保存
 def copy_to_slack(root, record_id):
     record = fetch_by_id(record_id)
     if not record:

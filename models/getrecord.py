@@ -1,5 +1,6 @@
 import pymysql
 
+# データベース接続取得
 def get_connection():
     return pymysql.connect(
         host='localhost',
@@ -10,6 +11,7 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
+# records検索
 def fetch_by_id(record_id):
     """IDを基にrecordsテーブルから1件取得する"""
     with get_connection() as conn:
