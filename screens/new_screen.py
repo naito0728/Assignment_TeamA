@@ -86,7 +86,7 @@ class NewScreen(tk.Frame):
 		connection = pymysql.connect(
 			host="localhost",
 			user="root",
-			password="root",
+			password="0728",
 			database="app_assiggnment",
 			charset="utf8mb4",
 			cursorclass=pymysql.cursors.DictCursor,
