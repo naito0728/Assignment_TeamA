@@ -1,25 +1,17 @@
 import pymysql
 import json
+import datetime
 import tkinter as tk
-from tkinter import scrolledtext,messagebox
+from tkinter import scrolledtext,messagebox,simpledialog
 from .scroll_frame import ScrollableFrame
 
 
 class NewScreen(tk.Frame):
-	def __init__(self, master, show_screen_callback):
+	def __init__(self, master, show_screen_callback, top_frame):
 		super().__init__(master)
 		self.show_screen = show_screen_callback
-		self.top_frame = None  # set_top_frame() で後から設定⇒OK
+		self.top_frame = top_frame  # set_top_frame() で後から設定⇒OK
 		
-		#DB設定
-		#connection = pymysql.connect(
-		#	host="localhost",
-		#	user="root",
-		#	password="root",
-		#	database="app_assiggnment",
-		#	charset="utf8mb4",
-		#	cursorclass=pymysql.cursors.DictCursor,
-		#)
 		### リストに設定 ###
 		standup_title  = ["standup","日付","昨日やったこと","今日やったこと","困っていること","チケット番号"]
 		standup_items  = ["frame_standup","date","done","today","blocker","ticket"]
@@ -31,24 +23,33 @@ class NewScreen(tk.Frame):
 		### GUI作成 ###
 		scroll = ScrollableFrame(self)
 		scroll.pack(fill="both", expand=True, padx=10, pady=10)
+		top_frame.option_add("*Label.background", "#FFFDD0")
+		top_frame.option_add("*Radiobutton.background", "#FFFDD0")
+		top_frame.bind_class("Button", "<Enter>", self.enter_bg)
+		top_frame.bind_class("Button", "<Leave>", self.leave_bg)
+
+		
 
 		##ヘッダー部分
 		#選択
-		frame_top = tk.Frame(scroll.scrollable_frame, pady=5)
+		frame_top = tk.Frame(scroll.scrollable_frame, pady=5, bg="#FFFDD0")
 		self.var = tk.StringVar(value="1")
 		tk.Label(frame_top, text="種類:").pack(pady=5)
-		#中央揃えにしたい
-		tk.Radiobutton(frame_top, command=self.switchDisp, text="日報", variable=self.var, value="1").pack(side=tk.LEFT)
-		tk.Radiobutton(frame_top, command=self.switchDisp, text="引継ぎ", variable=self.var, value="2").pack(side=tk.LEFT)
-		tk.Radiobutton(frame_top, command=self.switchDisp, text="障害/問合せ", variable=self.var, value="3").pack(side=tk.LEFT)
-		frame_top.pack(fill=tk.X, anchor=tk.CENTER)
+		radio_frame = tk.Frame(frame_top, bg="#FFFDD0")
+		tk.Radiobutton(radio_frame, command=self.switchDisp, text="日報", variable=self.var, value="1").pack(side=tk.LEFT)
+		tk.Radiobutton(radio_frame, command=self.switchDisp, text="引継ぎ", variable=self.var, value="2").pack(side=tk.LEFT)
+		tk.Radiobutton(radio_frame, command=self.switchDisp, text="障害/問合せ", variable=self.var, value="3").pack(side=tk.LEFT)
+		radio_frame.pack()
+		frame_top.pack(fill=tk.X)
 
 		#戻るボタンと登録ボタン
-		#ここも綺麗に揃えたい
-		btn_frame = tk.Frame(scroll.scrollable_frame)
-		tk.Button(btn_frame, text="戻る", command=lambda: self.show_screen(self.top_frame)).pack(side=tk.LEFT, pady=10, padx=40)
-		tk.Button(btn_frame, text="登録", command=lambda: self.regData()).pack(side=tk.LEFT, pady=10, padx=40)
+		btn_frame = tk.Frame(scroll.scrollable_frame, bg="#FFFDD0")
+		btn_inner = tk.Frame(btn_frame, bg="#FFFDD0")
+		tk.Button(btn_inner, text="戻る",width=30, command=lambda: self.show_screen(self.top_frame)).pack(side=tk.LEFT, pady=10, padx=40)
+		tk.Button(btn_inner, text="登録",width=30, command=lambda: self.regData()).pack(side=tk.LEFT, pady=10, padx=40)
+		btn_inner.pack()
 		btn_frame.pack(fill=tk.X)
+
 
 		#各パターンの情報を辞書型で保持
 		self.entries = {}
@@ -68,8 +69,8 @@ class NewScreen(tk.Frame):
 		self.switchDisp()
 		#connection.close()
 
-	def setTopFrame(self, top_frame):
-		self.top_frame = top_frame
+	#def setTopFrame(self, top_frame):
+	#	self.top_frame = top_frame
 
 	def switchDisp(self):
 		type_map = {"1": "standup", "2": "handover", "3": "incident"}
@@ -97,13 +98,26 @@ class NewScreen(tk.Frame):
 			return
 		result = {}
 		for key, widget in self.entries[selected].items():
-			result[key] = widget.get("1.0", "end-1c")
-		#print(selected)
-		#print(result)
-		#print(result['date'])
+			if isinstance(widget, tk.Entry):
+				result[key] = widget.get()
+			else:
+				result[key] = widget.get("1.0", "end-1c")
 
-		title = ""
-		body = ""
+		if selected == "standup":
+			if not self.validate_date(result.get("date", "")):
+				return
+			tmp = result["date"].replace("/","")
+			title = "日報_" + tmp
+			body = result["today"]
+		elif selected == "handover":
+			title = result["title"]
+			body = ""
+		elif selected == "incident":
+			title = result["summary"]
+			body  = result["chkedlog"]
+		else:
+			title = ""
+			body = ""
 		meta_json = json.dumps(result, ensure_ascii=False)
 		with connection.cursor() as cursor:
 			insSQL = "INSERT INTO records (record_type, title, body, meta_json) VALUES ('" + selected + "','"
@@ -114,11 +128,16 @@ class NewScreen(tk.Frame):
 		self.finReg()
 
 	def dispEachItems(self, titles, items, scroll):
-		section_frame = tk.Frame(scroll.scrollable_frame, pady=5)
+		today = datetime.date.today().strftime("%Y-%m-%d")
+		section_frame = tk.Frame(scroll.scrollable_frame, pady=5, bg="#FFFDD0")
 		entry_dict = {}
 		for i in range(1, len(titles)):
 			tk.Label(section_frame, text=titles[i]+":").pack(pady=5)
-			entry = scrolledtext.ScrolledText(section_frame, width=50, height=5)
+			if titles[i] == "日付":
+				entry = tk.Entry(section_frame, width=20, justify='center')
+				entry.insert(0, today)
+			else:
+				entry = scrolledtext.ScrolledText(section_frame, width=50, height=5)
 			entry.pack(pady=5)
 			entry_dict[items[i]] = entry
 		return entry_dict, section_frame
@@ -126,9 +145,23 @@ class NewScreen(tk.Frame):
 	def finReg(self):
 		for section in self.entries.values():
 			for widget in section.values():
-				widget.delete("1.0", "end")
+				if isinstance(widget, tk.Entry):
+					widget.delete(0, "end")
+				else:
+					widget.delete("1.0", "end")
 		messagebox.showinfo("登録完了","登録が完了しました")
 		self.show_screen(self.top_frame)
-		
-		
-		
+	
+	
+	def validate_date(self, text):
+		try:
+			datetime.datetime.strptime(text, "%Y-%m-%d")
+			return True
+		except ValueError:
+			messagebox.showerror("入力エラー", "日付は YYYY-MM-DD 形式で入力してください。")
+			return False
+
+	def enter_bg(self, event):
+		event.widget['bg'] = '#CCFFFF'
+	def leave_bg(self, event):
+		event.widget['bg'] = 'SystemButtonFace'
