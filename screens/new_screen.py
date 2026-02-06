@@ -25,8 +25,8 @@ class NewScreen(tk.Frame):
 		scroll.pack(fill="both", expand=True, padx=10, pady=10)
 		top_frame.option_add("*Label.background", "#FFFDD0")
 		top_frame.option_add("*Radiobutton.background", "#FFFDD0")
-		top_frame.bind_class("Button", "<Enter>", self.enter_bg)
-		top_frame.bind_class("Button", "<Leave>", self.leave_bg)
+		#top_frame.bind_class("Button", "<Enter>", self.enter_bg)
+		#top_frame.bind_class("Button", "<Leave>", self.leave_bg)
 
 		
 
@@ -45,7 +45,7 @@ class NewScreen(tk.Frame):
 		#戻るボタンと登録ボタン
 		btn_frame = tk.Frame(scroll.scrollable_frame, bg="#FFFDD0")
 		btn_inner = tk.Frame(btn_frame, bg="#FFFDD0")
-		tk.Button(btn_inner, text="戻る",width=30, command=lambda: self.show_screen(self.top_frame)).pack(side=tk.LEFT, pady=10, padx=40)
+		tk.Button(btn_inner, text="戻る",width=30, command=lambda: self.show_screen(top_frame)).pack(side=tk.LEFT, pady=10, padx=40)
 		tk.Button(btn_inner, text="登録",width=30, command=lambda: self.regData()).pack(side=tk.LEFT, pady=10, padx=40)
 		btn_inner.pack()
 		btn_frame.pack(fill=tk.X)

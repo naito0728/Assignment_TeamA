@@ -51,21 +51,32 @@ class SearchScreen(tk.Frame):
         style.map("Treeview", background=[("selected", "#a4cbf5")])
 
         # 結果表示
-        self.tree = ttk.Treeview(self, columns=("record_type", "body", "created_at"), show="headings")
+        self.tree = ttk.Treeview(self, columns=("id", "record_type", "body", "created_at"), show="headings")
         self.tree.heading("record_type", text="種類")
         self.tree.heading("body", text="本文")
         self.tree.heading("created_at", text="日付")
         self.tree.pack(padx=20, pady=20, fill='both', expand=True)
-
-        # スクロールバー
-        scroll = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scroll.set)
-        scroll.pack(side="right", fill="y")
-        self.tree.pack(padx=20, pady=20, fill="both", expand=True)
+        self.tree.column("id", width=0, stretch=False)
 
         # 交互行の背景色
         self.tree.tag_configure('oddrow', background='white')
         self.tree.tag_configure('evenrow', background="#e6e6e6")
+        self.tree.bind("<Double-1>", self._on_double_click)
+
+    def _on_double_click(self, event):
+        selected = self.tree.selection()
+        if not selected:
+            return
+
+        item = self.tree.item(selected[0])
+        record_id = item["values"][0]
+
+        # 詳細画面へ遷移
+        self.show_screen(self.detail_screen)
+
+        # 詳細画面にIDを渡す
+        self.detail_screen.load_record(record_id)
+
               
     def _search_records(self):
         record_type = self.record_type_var.get()
@@ -87,6 +98,9 @@ class SearchScreen(tk.Frame):
         # Treeview に表示（交互色）
         for idx, row in enumerate(results):
             tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
-            self.tree.insert("", "end",
-                             values=(row['record_type'], row['body'], row['created_at']),
-                             tags=(tag,))
+            self.tree.insert(
+                "",
+                "end",
+                values=(row['id'], row['record_type'], row['body'], row['created_at']),
+                tags=(tag,)
+            )
