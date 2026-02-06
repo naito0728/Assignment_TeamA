@@ -6,10 +6,10 @@ from .scroll_frame import ScrollableFrame
 
 
 class NewScreen(tk.Frame):
-	def __init__(self, master, show_screen_callback):
+	def __init__(self, master, show_screen_callback, top_frame):
 		super().__init__(master)
 		self.show_screen = show_screen_callback
-		self.top_frame = None  # set_top_frame() で後から設定⇒OK
+		self.top_frame = top_frame  # set_top_frame() で後から設定⇒OK
 		
 		#DB設定
 		#connection = pymysql.connect(
@@ -68,8 +68,8 @@ class NewScreen(tk.Frame):
 		self.switchDisp()
 		#connection.close()
 
-	def setTopFrame(self, top_frame):
-		self.top_frame = top_frame
+	#def setTopFrame(self, top_frame):
+	#	self.top_frame = top_frame
 
 	def switchDisp(self):
 		type_map = {"1": "standup", "2": "handover", "3": "incident"}
@@ -85,7 +85,7 @@ class NewScreen(tk.Frame):
 		connection = pymysql.connect(
 			host="localhost",
 			user="root",
-			password="root",
+			password="0728",
 			database="app_assiggnment",
 			charset="utf8mb4",
 			cursorclass=pymysql.cursors.DictCursor,
